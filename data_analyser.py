@@ -5,14 +5,14 @@ from scipy.signal import savgol_filter
 
 
 class DataAnalyser:
-    """Handles F1 telemetry data analysis and calculations for pole position laps"""
+    # Handles F1 telemetry data analysis and calculations for pole position laps
 
     def __init__(self):
         pass
 
-    # ---------------- Session & Lap Handling ----------------
+    # ---------------- Session and Lap Handling ----------------
     def get_pole_position_lap(self, _session, driver_code):
-        """Get the pole position qualifying lap for a specific driver"""
+        # Get the pole position qualifying lap for a specific driver
         try:
             if _session is None:
                 return None, None, "No session loaded."
@@ -47,18 +47,17 @@ class DataAnalyser:
             return None, None, f"Error getting pole position lap: {e}"
 
     def get_fastest_lap(self, _session, driver_code):
-        """Backwards-compatible wrapper for pole lap retrieval"""
+        # Backwards-compatible wrapper for pole lap retrieval 
         return self.get_pole_position_lap(_session, driver_code)
 
     # ---------------- Utilities ----------------
     def _smooth_signal(self, data, window_length=7, polyorder=3):
-        """Apply Savitzky-Golay smoothing to reduce noise while preserving features"""
-        # Fixed: Use .ffill() and .bfill() instead of deprecated fillna(method=)
+        # Apply Savitzky-Golay smoothing to reduce noise while preserving features 
         clean_data = data.ffill().bfill()
         return savgol_filter(clean_data, window_length=window_length, polyorder=polyorder)
 
     def _calculate_time_deltas(self, time_series):
-        """Calculate Δt between samples"""
+        # Calculate Δt between samples
         time_diff = time_series.diff().dt.total_seconds()
         time_diff = time_diff.replace(0, 0.001).fillna(0.001)
         time_diff[time_diff <= 0] = 0.001
@@ -66,7 +65,7 @@ class DataAnalyser:
 
     # ---------------- Performance Metrics ----------------
     def calculate_performance_metrics(self, telemetry):
-        """Calculate lap performance metrics"""
+        # Calculate lap performance metrics
         if telemetry is None or telemetry.empty:
             return {}
 
@@ -233,7 +232,7 @@ class DataAnalyser:
 
     # ---------------- Speed Statistics ----------------
     def calculate_speed_statistics(self, telemetry):
-        """Calculate descriptive statistics for speed"""
+        # Calculate descriptive statistics for speed 
         if telemetry is None or telemetry.empty:
             return {}
 
@@ -255,7 +254,7 @@ class DataAnalyser:
 
     # ---------------- Throttle & Braking Patterns ----------------
     def analyse_throttle_patterns(self, telemetry):
-        """Analyse throttle usage distribution"""
+        # Analyse throttle usage distribution 
         if telemetry is None or telemetry.empty:
             return {}
 
@@ -274,7 +273,7 @@ class DataAnalyser:
             return {}
 
     def analyse_braking_patterns(self, telemetry):
-        """Analyse braking intensity distribution"""
+        # Analyse braking intensity distribution 
         if telemetry is None or telemetry.empty:
             return {}
 
