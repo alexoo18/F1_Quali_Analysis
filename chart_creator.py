@@ -36,7 +36,7 @@ class ChartCreator:
 
         return telemetry
 
-    # ---------------- Driving patterns (horizontal bar chart) ----------------
+    # ---------------- Driving patterns ----------------
     
     def create_driving_patterns_chart(self, metrics, driver_code):
         
