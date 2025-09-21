@@ -4,6 +4,17 @@ An interactive **Streamlit application** that analyses Formula 1 **qualifying se
 
 ---
 
+## ⚠️ Important Note on Data Accuracy
+
+This app leverages the official F1 API via the FastF1 library. It is crucial to understand the nature of this public data:
+
+- ✅ Longitudinal Acceleration (Braking/Acceleration G-Forces) is Accurate: Calculated directly from high-quality velocity sensor data, these readings are reliable and show expected Formula 1 values (4-6G under braking, 2-3G under acceleration).
+- ❌ Lateral Acceleration (Cornering G-Forces) is a Best-Effort Estimate: The API's X/Y positional data is intended for broadcast graphics, not high-precision GPS. Calculations of lateral acceleration (via v²/r) are derived from this low-resolution data and will show implausibly low values (~1G). This is a fundamental data constraint, not a bug in this app. The dashboard provides these values for trend analysis only.
+
+‼️ __The app focuses on what the data can reliably tell us: longitudinal performance, driver inputs, and speed traces.__ ‼️
+
+---
+
 ## ✨ Features
 
 - 📅 **Historical Coverage**: Analyse qualifying sessions from 2018 to 2025.
@@ -53,13 +64,18 @@ An interactive **Streamlit application** that analyses Formula 1 **qualifying se
 
 ## ▶️ Usage
 
-Run the app with:
+1. Run the app with:
 
 ```bash
 streamlit run main.py
 ```
 
-Then open the provided local URL in your browser. 
+2. Wait for the app to launch. It will automatically open in your default browser, typically at http://localhost:8501.
+3. In the sidebar:
+     - Select a year (from 2018 to the present).
+     - Select a Grand Prix from that season's calendar.
+     - Click Load Session to fetch and cache the data. The first time for a new session may take a moment.
+4. Explore! The main panel will populate with information about the pole position lap, interactive telemetry charts, and performance metrics.
 
 ---
 
@@ -79,15 +95,12 @@ f1-qualifying-analysis/
 
 ---
 
-## ⚡ How It Works
+## 🔍 How It Works
 
-1. Select a year (2018 onwards).
-2. Choose a Grand Prix from that season.
-3. Load the qualifying session.
-4. Analyse the pole position lap:
-   - View lap info, sector times, and tyre compound.
-   - Explore telemetry (speed, throttle, brake, gear, acceleration).
-   - Check performance metrics and visual track maps.
+1. Session Loading: The app uses FastF1 to fetch session timing and telemetry data, storing it in a local cache for future speed.
+2. Pole Identification: Finds the fastest lap and driver from the qualifying session results.
+3. Data Processing: Telemetry data is cleaned and processed (e.g., acceleration is calculated from speed, signals are smoothed with a Savitzky-Golay filter).
+4. Visualisation: Processed data is passed to Plotly to create interactive, hover-enabled charts within the Streamlit interface.
 
 ---
 
@@ -112,14 +125,19 @@ Pole Position Analysis:
 <img width="1513" height="584" alt="image" src="https://github.com/user-attachments/assets/3e99e5f9-febc-45de-8374-47cea6c59bea" />
 
 
-
 ---
 
 ## 📝 Notes
 
-- Data is pulled directly from FastF1
-- First load of a new session may take longer (data is cached locally).
-- Supports sessions from 2018 to the latest completed season.
+- The first time you load a new session, there will be a delay as data is downloaded from the FastF1 API and cached locally. Subsequent loads will be significantly faster.
+- The accuracy of the data is dependent on the official F1 API. Some historical sessions may have incomplete telemetry.
+
+---
+
+## 🙏 Acknowledgments
+
+- Thanks to the [FastF1](https://github.com/theOehrly/Fast-F1) library for providing a fantastic interface to the F1 data.
+- Data sourced from the official Formula 1 API.
 
 ---
 
