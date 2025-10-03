@@ -26,8 +26,6 @@ class DataAnalyser:
             try:
                 results = _session.results
                 pole_driver = results[results['Position'] == 1]['Abbreviation'].iloc[0]
-                # if pole_driver != driver_code:
-                #     return None, None, f"{driver_code} did not achieve pole position. Pole was achieved by {pole_driver}."
             except:
                 pass
 
@@ -47,14 +45,14 @@ class DataAnalyser:
             return None, None, f"Error getting pole position lap: {e}"
 
     def get_fastest_lap(self, _session, driver_code):
-        # Backwards-compatible wrapper for pole lap retrieval 
+        # Helper to fetch the pole lap 
         return self.get_pole_position_lap(_session, driver_code)
 
     # ---------------- Utilities ----------------
-    def _smooth_signal(self, data, window_length=7, polyorder=3):
+    def _smooth_signal(self, data, window_length = 7, polyorder = 3):
         # Apply Savitzky-Golay smoothing to reduce noise while preserving features 
         clean_data = data.ffill().bfill()
-        return savgol_filter(clean_data, window_length=window_length, polyorder=polyorder)
+        return savgol_filter(clean_data, window_length = window_length, polyorder = polyorder)
 
     def _calculate_time_deltas(self, time_series):
         # Calculate Δt between samples
@@ -75,7 +73,7 @@ class DataAnalyser:
 
             # ---- Full Throttle Percentage ----
             if "Throttle" in telemetry.columns:
-                throttle = pd.to_numeric(telemetry["Throttle"], errors="coerce").fillna(0)
+                throttle = pd.to_numeric(telemetry["Throttle"], errors = "coerce").fillna(0)
 
                 # Normalise throttle values
                 if throttle.max() <= 1.0:
@@ -89,7 +87,7 @@ class DataAnalyser:
 
             # ---- Heavy Braking Percentage ----
             if "Brake" in telemetry.columns:
-                brake = pd.to_numeric(telemetry["Brake"], errors="coerce").fillna(0)
+                brake = pd.to_numeric(telemetry["Brake"], errors = "coerce").fillna(0)
 
                 # Normalise brake values 
                 if brake.max() <= 1.0:
@@ -136,13 +134,13 @@ class DataAnalyser:
             else:
                 metrics.update({"max_accel_g": None, "max_braking_g": None})
 
-            # ---- Lateral Acceleration - Fixed Version ----
+            # ---- Lateral Acceleration ----
             if all(col in telemetry.columns for col in ["X", "Y", "Speed"]):
                 try:
                     if len(telemetry) >= 7:
                         # Much lighter smoothing to preserve cornering detail
-                        x_smooth = self._smooth_signal(telemetry["X"], window_length=5, polyorder=2)
-                        y_smooth = self._smooth_signal(telemetry["Y"], window_length=5, polyorder=2)
+                        x_smooth = self._smooth_signal(telemetry["X"], window_length = 5, polyorder = 2)
+                        y_smooth = self._smooth_signal(telemetry["Y"], window_length = 5, polyorder = 2)
 
                         # Calculate derivatives
                         dx, dy = np.gradient(x_smooth), np.gradient(y_smooth)
@@ -160,7 +158,7 @@ class DataAnalyser:
                         dheading = np.where(dheading < -np.pi, dheading + 2*np.pi, dheading)
                         dheading = np.append(dheading, 0)
 
-                        # Calculate curvature - MUCH less restrictive clipping
+                        # Calculate curvature (less restrictive clipping)
                         raw_curvature = dheading / ds
                         
                         # Use percentile-based clipping instead of hard limits
@@ -173,10 +171,10 @@ class DataAnalyser:
                         speed_ms = telemetry["Speed"] / 3.6
                         lateral_accel_ms2 = speed_ms**2 * np.abs(curvature)
                         
-                        # Convert to g with more reasonable limits
+                        # Convert to g 
                         lat_accel_g = lateral_accel_ms2 / 9.81
                         
-                        # Apply realistic F1 limits (0-8g)
+                        # Apply realistic limits (0-8g)
                         telemetry["lateral_accel_g"] = np.clip(lat_accel_g, 0, 8)
 
                         # Calculate maximum
@@ -195,7 +193,7 @@ class DataAnalyser:
                             corner_speeds = telemetry.loc[corner_mask, "Speed"] / 3.6
                             estimated_lat_g = np.zeros(len(telemetry))
                             
-                            # For corners, estimate lateral g (empirical formula for F1)
+                            # For corners, estimate lateral g 
                             estimated_lat_g[corner_mask] = (corner_speeds / 20) + 2  # 2-5g range
                             
                             telemetry["lateral_accel_g"] = estimated_lat_g
@@ -207,9 +205,9 @@ class DataAnalyser:
                         
                 except Exception as e:
                     print(f"Lateral acceleration calculation failed: {e}")
-                    # Simple fallback - estimate based on speed patterns
+                    # fallback ==> estimate based on speed patterns
                     if "Speed" in telemetry.columns:
-                        speed_var = telemetry["Speed"].rolling(window=10).std().fillna(0)
+                        speed_var = telemetry["Speed"].rolling(window = 10).std().fillna(0)
                         estimated_lat = (speed_var / 10).clip(0, 5)  # Speed variation indicates cornering
                         telemetry["lateral_accel_g"] = estimated_lat
                         metrics["max_lateral_g"] = float(estimated_lat.max())

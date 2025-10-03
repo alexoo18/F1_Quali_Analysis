@@ -39,6 +39,7 @@ class SessionManager:
             events = sorted([event for event in events if event])
             
             return events, f"Found {len(events)} events for {year}"
+        
         except Exception as e:
             return [], f"Error getting events for {year}: {str(e)}"
 
@@ -53,7 +54,7 @@ class SessionManager:
             return None, f"❌ Error loading session: {str(e)}"
 
     def get_pole_position_driver(self, session):
-        # Identify pole position
+        # Identify pole position (P1)
         if session is None:
             return None, "No session loaded"
         
@@ -67,12 +68,56 @@ class SessionManager:
                 return None, "No pole position data found"
             
             driver_code = pole_driver['Abbreviation'].iloc[0]  
-            driver_name = pole_driver['FullName'].iloc[0]      # full name of driver 
+            driver_name = pole_driver['FullName'].iloc[0]
             
             return driver_code, f"Pole position: {driver_name} ({driver_code})"
             
         except Exception as e:
             return None, f"Error finding pole position: {e}"
+
+    def get_p2_driver(self, session):
+        # Identify P2 driver (second place in qualifying)
+        if session is None:
+            return None, "No session loaded"
+        
+        try:
+            results = session.results
+            if results is None or results.empty:
+                return None, "No qualifying results available"
+            
+            p2_driver = results[results['Position'] == 2]
+            if p2_driver.empty:
+                return None, "No P2 data found"
+            
+            driver_code = p2_driver['Abbreviation'].iloc[0]
+            driver_name = p2_driver['FullName'].iloc[0]
+            
+            return driver_code, f"P2: {driver_name} ({driver_code})"
+            
+        except Exception as e:
+            return None, f"Error finding P2: {e}"
+
+    def get_driver_by_position(self, session, position):
+        # Get driver by qualifying position (1 for pole, 2 for P2, etc.)
+        if session is None:
+            return None, "No session loaded"
+        
+        try:
+            results = session.results
+            if results is None or results.empty:
+                return None, "No qualifying results available"
+            
+            driver = results[results['Position'] == position]
+            if driver.empty:
+                return None, f"No driver found at position {position}"
+            
+            driver_code = driver['Abbreviation'].iloc[0]
+            driver_name = driver['FullName'].iloc[0]
+            
+            return driver_code, f"P{position}: {driver_name} ({driver_code})"
+            
+        except Exception as e:
+            return None, f"Error finding driver at position {position}: {e}"
 
     def get_available_drivers(self, session):
         # Return list of drivers who took part in the session
@@ -86,13 +131,13 @@ class SessionManager:
             return []
 
     def get_available_years(self):
-        # Get list of 2018 to 2025 
+        # Get list of 2018 to current year 
         import datetime
         current_year = datetime.datetime.now().year
         return list(range(2018, current_year + 1))
 
     def get_session_info(self, session):
-        # Extract basic metadata about the session i.e. event name, session name, date, total laps, year
+        # Extract basic metadata about the session
         if session is None:
             return {}
         try:
@@ -146,7 +191,6 @@ class SessionManager:
 
     def validate_session(self, session) -> bool:
         # Validate that a session has been loaded properly
-        # Ensures laps dataframe exists and is non-empty
         if session is None:
             return False
         try:
